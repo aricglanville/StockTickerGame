@@ -1,0 +1,273 @@
+﻿@page  
+@using StockTicker.Models
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+
+<!DOCTYPE html>
+<html>
+
+<h1 class="display-4 text-center"><u>Stock Ticker Game</u></h1>
+
+<!--Show this at page start then after information is submitted save the data and hide this div-->
+<div id="startArea" class="text-center" runat="server">
+    <form method="post">
+        <span>Please Enter a Stock Symbol To Begin Game:</span>
+
+        <select id="stockSymbol" name="stockSymbol">
+               <option value="AAPL">AAPL - (apple)</option>
+               <option value="MSFT">MSFT - (microsoft)</option>
+               <option value="AMZN">AMZN - (amazon)</option>
+               <option value="TSLA">TSLA - (tesla)</option>
+               <option value="GME">GME - (gamestop)</option>
+        </select>
+        
+        <br />
+        @Html.AntiForgeryToken()
+        <input type="button" id="startButton" value="Start" onclick="toggleDiv('startArea')"/>
+
+    </form>
+</div>
+
+
+<!--after above info is submitted and saved to DB unhide this div-->
+<div id="gameArea" class="text-center" style="visibility:hidden" runat="server">
+
+    <!--Show graph here-->
+    <div id="graph">
+    <center>
+        <div id="tester" style="width:600px;height:250px;"></div>
+    </center>
+    </div><br/>
+
+    <!--users bank account-->
+
+        <table class="account-info">
+            <tr>
+                <th class="account-info">Bank Account:</th>
+                <td class="account-info">$@Model.Balance</td>
+            </tr>
+            <tr>
+                <th class="account-info">Owned Stock:</th>
+                <td class="account-info">@Model.StockOwned</td>
+            </tr>
+        </table>
+        <br/>
+    
+        <form id="menu" method="post">
+            <!--buttons for buy or sell-->
+            <div id="stockInfo"></div>
+            <span>Would you like to Buy, Sell, Hold, or Quit?</span><br />
+            <input type="radio" id="buyButton" name="bshbtn" value="Buy" onclick="showBuySellInput()">Buy</>
+            <input type="radio" id="sellButton" name="bshbtn" value="Sell" onclick="showBuySellInput()" />Sell</>
+            <input type="radio" id="holdButton" name="bshbtn" value="Hold" onclick="showBuySellInput()" />Hold</><br />
+            <input type="text" id="buySellInput" style="visibility:hidden" onkeyup="updateSlider(document.getElementById('buySellInput').value)" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');" /><br /><br />
+            <center>
+                <div class="slidecontainer" id="slider" style="visibility:hidden">
+                    <input type="range" min="0" max="@Model.Balance" value="1" class="slider" id="myRange">
+                    <p>Amount: <span id="demo"></span></p>
+                </div>
+            </center>
+        
+            @Html.AntiForgeryToken()
+            <input type="button" id="acceptButton" value="Accept" /><br /><br />
+        </form>
+        @Html.AntiForgeryToken()
+        <input type="button" id="quitButton" value="Quit" />
+
+</div>
+
+</html>
+
+@section Scripts
+{
+    <script>
+        var test = "";
+    </script>
+
+
+    <script src="https://cdn.plot.ly/plotly-2.12.1.min.js"></script>
+    <script src="plotly-2.12.1.min.js"></script>
+
+<!--load account info-->
+    <script> 
+        var data = [
+            {
+                x: ['Bank Account', 'Stocks'],
+                y: [@Model.Balance, @Model.StockOwned],
+                type: 'bar'
+            }
+        ];
+
+        Plotly.newPlot('tester', data);
+    </script>
+
+<!--show BuySell input-->
+    <script type="text/javascript">
+        function showBuySellInput() {
+            var hold = document.getElementById("holdButton");
+            if (hold.checked) {
+                document.getElementById("buySellInput").style.visibility = 'hidden';
+                document.getElementById("slider").style.visibility = 'hidden';
+            }
+            else {
+                document.getElementById("buySellInput").style.visibility = 'visible';
+                document.getElementById("slider").style.visibility = 'visible';
+            }
+        }
+    </script>
+<!--Toggle div-->
+    <script type="text/javascript">
+
+        //function to hide/show divs on start button click
+        function toggleDiv(id) {
+            var div = document.getElementById(id);
+            div.style.display = "none";
+            var div = document.getElementById('gameArea');
+            div.style.visibility = "visible";
+
+        };
+    </script>
+
+<!--update slider amount-->
+    <script>
+        function updateSlider(amount) {
+            document.getElementById("myRange").value = amount;
+            document.getElementById("demo").innerHTML = amount;
+        };
+     </script>
+
+<!--Slider stuff-->
+    <script type="text/javascript">
+        
+        var slider = document.getElementById("myRange");
+        var output = document.getElementById("demo");
+        var amountToBuySellText = document.getElementById("buySellInput");
+
+        output.innerHTML = slider.value;
+
+        slider.oninput = function () {
+            output.innerHTML = this.value;
+            amountToBuySellText.value = this.value;
+        }
+    </script>
+    
+<!--Ajax Scripts-->
+    
+<!--Start Game-->
+    <script type="text/javascript">
+
+        //initialize the game
+        $("#startButton").click(function() {
+            var e = document.getElementById("stockSymbol");
+            var strUser = e.value;
+            $.ajax({
+                type: "POST",
+                url: "/Index?handler=AjaxGameStart",
+                data: { "val": strUser },
+                contentType: 'application/x-www-form-urlencoded',
+                dataType: "json",
+                headers:
+                {
+                    "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').val()
+                },
+                success: function(message) {
+                    
+                    document.getElementById("stockInfo").innerHTML = message;
+                }
+            });
+        });
+    </script>
+    
+<!--Accept Button-->
+    <script type="text/javascript">    
+        
+        //function to handle accept button (buy/sell/hold)
+        $("#acceptButton").click(function() {
+
+            var amount = document.getElementById("demo").innerHTML;
+            
+
+            if(document.getElementById('buyButton').checked)//buy: pass in amount of stock to buy
+            {
+                $.ajax({
+                    type: "POST",
+                    url: "/Index?handler=AjaxBuy",
+                    data: { "val": amount },
+                    contentType: 'application/x-www-form-urlencoded',
+                    dataType: "json",
+                    headers:
+                    {
+                        "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(message) {
+                    
+                        document.getElementById("stockInfo").innerHTML = message;
+                    }
+                });
+            }
+            else if(document.getElementById('sellButton').checked)//sell: pass in amount of stock to sell
+            {
+                $.ajax({
+                    type: "POST",
+                    url: "/Index?handler=AjaxSell",
+                    data: { "val": amount },
+                    contentType: 'application/x-www-form-urlencoded',
+                    dataType: "json",
+                    headers:
+                    {
+                        "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(message) {
+                    
+                        document.getElementById("stockInfo").innerHTML = message;
+                    }
+                });
+            }
+            else if(document.getElementById('holdButton').checked)//hold 
+            {
+                $.ajax({
+                    type: "POST",
+                    url: "/Index?handler=AjaxHold",
+                    data: {},
+                    contentType: 'application/x-www-form-urlencoded',
+                    dataType: "json",
+                    headers:
+                    {
+                        "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(message) {
+
+                        document.getElementById("stockInfo").innerHTML = message;
+                    }
+                });
+            }
+            
+        });
+    </script>
+
+    <!--Quit Button-->
+    <script type="text/javascript">
+        //function to quit game
+        $("#quitButton").click(function(message) {
+            $.ajax({
+                type: "POST",
+                url: "/Index?handler=AjaxQuit",
+                data: {  },
+                contentType: 'application/x-www-form-urlencoded',
+                dataType: "json",
+                headers:
+                {
+                    "RequestVerificationToken": $('input:hidden[name="__RequestVerificationToken"]').val()
+                },
+                success: function(message) {
+                    document.getElementById("stockInfo").innerHTML = message;
+
+                }
+            });
+        });
+               
+    </script>
+}

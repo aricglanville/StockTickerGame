@@ -1,0 +1,53 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<script>   
+function test() {   
+    console.log("hi, here is the results of the test!!")
+    console.log();
+}   
+</script>   
+
+<!--Show this at page start then after information is submitted save the data and hide this div-->
+<div id="startInfo" class="text-center">
+    <h1 class="display-4">Stock Ticker Game</h1>
+    <span>Please Enter a Stock Symbol: </span><input type="text" name="stockName"/>
+    <br />
+    <span>Enter Amount of initial investment: $</span><input type="text" name="investmentAmt" value="0.00" />
+    <button>Submit</button>
+
+    <button onclick="test()">Test API grab {tick'BAC'}</button>
+</div>
+
+
+
+
+ <table>
+                <thead>
+                    <tr>
+                        <th>Tick</th>
+                        <th>price</th>
+                        <th>date</th></>
+                    </tr>
+                </thead>
+ <tbody>
+                   @foreach (var item in @Model.tes){
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.tick)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.price)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.date)
+                            </td>
+                        </tr>
+                    }}
+                </tbody>
+                </table>
+
+
