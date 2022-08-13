@@ -39,15 +39,6 @@ namespace StockTicker.Pages
         public IActionResult OnGet()
         {
             return Page();
-            //if (User.Identity.IsAuthenticated)
-            //{
-            //    return Page();
-            //}
-            //else
-            //{
-            //    return RedirectToPage("/Account/Login", new { area = "Identity" });
-            //}
-
         }
 
 //***********Helper functions*************************
@@ -89,18 +80,6 @@ namespace StockTicker.Pages
         {
             DateTime Day = start.AddDays(7);
             return Day;
-        }
-
-        //quit game completely
-        public string QuitGame()
-        {
-            //sell all stock the user has and add the money to bank account
-            double amount = StockOwned * OpenPrice;
-            Balance += amount;
-            var balString = Balance.ToString();
-
-            //TODO: show ending results by returning a string to the Ajax handler
-            return "GAME OVER. Your ending bank account has: $" + balString;
         }
 
         //************Ajax functions**********************
@@ -158,11 +137,6 @@ namespace StockTicker.Pages
 
 
             return new JsonResult("You decided to hold. " + " \n\r" + ProgressGameplay());
-        }
-
-        public IActionResult OnPostAjaxQuit()
-        {
-            return new JsonResult(QuitGame()); 
         }
 
     }
