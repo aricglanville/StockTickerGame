@@ -41,28 +41,6 @@ namespace StockTicker.Pages
             return Page();
         }
 
-//***********Helper functions*************************
-
-        //this function should be used to update the data shown on the charts 
-        public string ProgressGameplay()
-        {
-            startDate = NextDay(startDate);
-            //check if the day is today or in the future, if so we need to quit or it will break
-            if (startDate >= DateTime.Now)
-            {
-                return QuitGame();
-            }
-            var dateTest = startDate.ToString("yyyy-MM-dd");
-            //progress the game state
-            apiCall = new ApiClass(test, dateTest);
-            test = apiCall.stock_.Symbol.ToString();
-            OpenPrice = apiCall.stock_.Open;
-            OpenPrice = Math.Truncate(OpenPrice * 100) / 100;
-            
-            return "The price for {test} is ${OpenPrice}";
-
-        }
-
         public DateTime RandomDay()
         {
             Random gen = new Random();
@@ -82,17 +60,6 @@ namespace StockTicker.Pages
             return Day;
         }
 
-        //quit game completely
-        public string QuitGame()
-        {
-            //sell all stock the user has and add the money to bank account
-            double amount = StockOwned * OpenPrice;
-            Balance += amount;
-            var balString = Balance.ToString();
-
-            return "GAME OVER. Your ending bank account has: $" + balString;
-        }
-
         //************Ajax functions**********************
 
         public IActionResult OnPostAjaxGameStart(string val)
@@ -104,6 +71,7 @@ namespace StockTicker.Pages
             test = apiCall.stock_.Symbol.ToString();
             OpenPrice = apiCall.stock_.Open;
             OpenPrice = Math.Truncate(OpenPrice * 100) / 100;
+
             return new JsonResult($"The price for {test} is ${OpenPrice} - {startDate} ");
         }
 
@@ -120,14 +88,8 @@ namespace StockTicker.Pages
             test = apiCall.stock_.Symbol.ToString();
             OpenPrice = apiCall.stock_.Open;
             OpenPrice = Math.Truncate(OpenPrice * 100) / 100;
+
             return new JsonResult($"The price for {test} is ${OpenPrice} - {tempDate} ");
-        }
-
-        public IActionResult OnPostAjaxHold()
-        {
-            //do nothing and progress the game
-
-            return new JsonResult("You decided to hold. " + " \n\r" + ProgressGameplay());
         }
 
     }
