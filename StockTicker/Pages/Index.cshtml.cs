@@ -67,7 +67,7 @@ namespace StockTicker.Pages
         {
             Random gen = new Random();
             DateTime start = DateTime.Today.AddYears(-2);
-            int range = (DateTime.Today.AddMonths(-6) - start).Days;
+            int range = (DateTime.Today.AddMonths(-12) - start).Days;
             DateTime randDay = start.AddDays(gen.Next(range));
             if (randDay.DayOfWeek == DayOfWeek.Saturday || randDay.DayOfWeek == DayOfWeek.Sunday)
             {
@@ -80,6 +80,17 @@ namespace StockTicker.Pages
         {
             DateTime Day = start.AddDays(7);
             return Day;
+        }
+
+        //quit game completely
+        public string QuitGame()
+        {
+            //sell all stock the user has and add the money to bank account
+            double amount = StockOwned * OpenPrice;
+            Balance += amount;
+            var balString = Balance.ToString();
+
+            return "GAME OVER. Your ending bank account has: $" + balString;
         }
 
         //************Ajax functions**********************
@@ -97,7 +108,7 @@ namespace StockTicker.Pages
         }
 
 
-        public IActionResult OnPostAjaxBuy(string val, string valTwo)
+        public IActionResult OnPostAjaxAccept(string val, string valTwo)
         {
             CultureInfo culture = new CultureInfo("en-US");
             DateTime tempDate = Convert.ToDateTime(valTwo, culture);
@@ -112,29 +123,9 @@ namespace StockTicker.Pages
             return new JsonResult($"The price for {test} is ${OpenPrice} - {tempDate} ");
         }
 
-        public IActionResult OnPostAjaxSell(string val)
-        {
-            int sellAmount = Convert.ToInt32(val);
-
-            //check to see if we even have enough stock to sell
-            if (sellAmount > StockOwned)
-            {
-                return new JsonResult("You do not have enough stock to sell " + val + " shares.");
-            }
-            
-            //do stock and money algorithm
-            double money = OpenPrice * sellAmount;
-            Balance += money;
-            StockOwned -= sellAmount;
-
-            return new JsonResult("You sold " + val + " shares and made $" + money + " \n\r" + ProgressGameplay());
-        }
-
         public IActionResult OnPostAjaxHold()
         {
             //do nothing and progress the game
-
-
 
             return new JsonResult("You decided to hold. " + " \n\r" + ProgressGameplay());
         }

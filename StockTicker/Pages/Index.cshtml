@@ -9,8 +9,15 @@
 <!DOCTYPE html>
 <html>
 
+<head>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+
+<body style="padding-bottom : 79px">
+
 <h1 class="display-4 text-center"><u>Stock Ticker Game</u></h1>
-<h2 class="display-4 text-center" id="resultsArea" style="visibility:hidden"></h2>
 
 <!--Show this at page start then after information is submitted save the data and hide this div-->
 <div id="startArea" class="text-center" runat="server">
@@ -78,11 +85,38 @@
             <p style="visibility:hidden" id="notEgn">Not Enough stock avalible to sell ! </p><br />
             <input type="button" id="acceptButton" value="Accept" /><br />
             <p style="visibility:hidden" id="notOpt">Please pick one of the three options [buy,sell,hold] </p><br />
-            <input type="button" id="quitButton" value="Quit" onclick="QuitGame()"/>
+            <input type="button" id="quitButton" value="Quit" data-target="#myModal" data-toggle="modal" />
         </form>
 
 </div>
+<!-- Modal code for the quit funct -->
+    <div class="container">
+  <!-- Modal -->
+  <div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog">
 
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Game Results
+          </h4>
+        </div>
+        <div class="modal-body">
+          <p>You started off with $10,000</p>
+          <p>You picked <a id="stockNameEnd"></a></p>
+          <p>After playing the game and a force sellout</p>
+          <p>Your balance is $<a id="totalEnd"></a></p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-default" onClick="window.location.reload()">Close</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</body>
 
 </html>
 
@@ -120,29 +154,6 @@
         }
     </script>
 
-<!--Quit Button-->
-    <script type="text/javascript">
-        //function to quit game
-        function QuitGame() {
-            
-            var bank_v = parseFloat(document.querySelector("#bankTotal").textContent.split('$')[1]);
-            var stock_v = parseFloat(document.querySelector("#stockOwn").textContent);
-            var cost_v = parseFloat(document.querySelector("#stockInfo").textContent.split('$')[1]);
-            var ga = document.getElementById('gameArea');
-            var ra = document.getElementById('resultsArea');
-            ga.style.visibility = "hidden";
-            ra.style.visibility = "visible";
-
-            var endingAmt = bank_v + (stock_v * cost_v);
-
-            var results = document.getElementById('resultsArea');
-            
-            var resultMess = "GAME OVER! You finished with $" + endingAmt;
-            results.innerHTML = resultMess;
-
-        };
-               
-    </script>
 <!--Toggle div-->
     <script type="text/javascript">
 
@@ -209,7 +220,6 @@
 
                     document.getElementById("stockInfo").textContent = mes_1;
                     document.getElementById("stockInfoHID").textContent = mes_2;
-                    //document.getElementById("stockInfoHID").style.visibility = 'Hidden';
                 }
             });
         });
@@ -233,7 +243,7 @@
 
             $.ajax({
                 type: "POST",
-                url: "/Index?handler=AjaxBuy",
+                url: "/Index?handler=AjaxAccept",
                 data: { "val": strUser, "valTwo": strDate },
                 contentType: 'application/x-www-form-urlencoded',
                 dataType: "json",
@@ -251,66 +261,83 @@
 
                     document.getElementById("stockInfo").textContent = mes_1;
                     document.getElementById("stockInfoHID").textContent = mes_2;
-                    //document.getElementById("stockInfoHID").style.visibility = 'Hidden';
+
+                    var bank_v = parseFloat(document.querySelector("#bankTotal").textContent.split('$')[1]);
+                    var buySellInput_v = parseFloat(document.querySelector("#buySellInput").value);
+                    var cost_v = parseFloat(document.querySelector("#stockInfo").textContent.split('$')[1]);
+                    var data = [
+                        {
+                            x: ['Bank Account', 'Stocks'],
+                            y: [bank_v.toFixed(2), (buySellInput_v * cost_v)],
+                            type: 'bar'
+                        }
+                    ];
+
+                    Plotly.newPlot('tester', data);
+
+                    var stock_v = parseFloat(document.querySelector("#stockOwn").textContent);
+                    document.getElementById("stockNameEnd").textContent = document.getElementById("stockSymbol").value;
+                    var tot = bank_v + (cost_v * stock_v);
+                    document.getElementById("totalEnd").textContent = tot.toFixed(2);
                 }
         });
     }
         
         //function to handle accept button (buy/sell/hold)
-$("#acceptButton").click(function() {
+        $("#acceptButton").click(function() {
 
-    var buySellInput_v = parseFloat(document.querySelector("#buySellInput").value);
-    var bank_v = parseFloat(document.querySelector("#bankTotal").textContent.split('$')[1]);
-    var stock_v = parseFloat(document.querySelector("#stockOwn").textContent);
-    var cost_v = parseFloat(document.querySelector("#stockInfo").textContent.split('$')[1]);
+            var buySellInput_v = parseFloat(document.querySelector("#buySellInput").value);
+            var bank_v = parseFloat(document.querySelector("#bankTotal").textContent.split('$')[1]);
+            var stock_v = parseFloat(document.querySelector("#stockOwn").textContent);
+            var cost_v = parseFloat(document.querySelector("#stockInfo").textContent.split('$')[1]);
 
-    var buySellInput = document.querySelector("#buySellInput");
-    var bank = document.querySelector("#bankTotal");
-    var stock = document.querySelector("#stockOwn");
+            var buySellInput = document.querySelector("#buySellInput");
+            var bank = document.querySelector("#bankTotal");
+            var stock = document.querySelector("#stockOwn");
 
     
-    if (document.getElementById('buyButton').checked) {
+            if (document.getElementById('buyButton').checked) {
 
-        stock_v = stock_v + buySellInput_v;
+                stock_v = stock_v + buySellInput_v;
 
-        bank_v = bank_v - (buySellInput_v * cost_v)
+                bank_v = bank_v - (buySellInput_v * cost_v)
 
-        buySellInput.value = stock_v.toString();
-        document.querySelector("#myRange").value =  stock_v;
-        document.querySelector("#demo").textContent = stock_v.toString();
-        bank.textContent = '$' + bank_v.toFixed(2);
-        stock.textContent = stock_v.toString();
+                buySellInput.value = stock_v.toString();
+                document.querySelector("#myRange").value =  stock_v;
+                document.querySelector("#demo").textContent = stock_v.toString();
+                bank.textContent = '$' + bank_v.toFixed(2);
+                stock.textContent = stock_v.toString();
 
-        updatedApi();
-    }
-    else if (document.getElementById('sellButton').checked) {
+                updatedApi();
+            }
+            else if (document.getElementById('sellButton').checked) {
 
-        if (stock_v < buySellInput_v) {
-            document.getElementById("notEgn").style.visibility = "visible";
-        }
-        else { 
-        stock_v = stock_v - buySellInput_v;
+                if (stock_v < buySellInput_v) {
+                    document.getElementById("notEgn").style.visibility = "visible";
+                }
+                else { 
+                stock_v = stock_v - buySellInput_v;
 
-        bank_v = bank_v + (buySellInput_v * cost_v)
+                bank_v = bank_v + (buySellInput_v * cost_v)
 
-        buySellInput.value = stock_v.toString();
-        document.querySelector("#myRange").value =  stock_v;
-        document.querySelector("#demo").textContent = stock_v.toString();
-        bank.textContent = '$' + bank_v.toFixed(2);
-        stock.textContent = stock_v.toString();
+                buySellInput.value = stock_v.toString();
+                document.querySelector("#myRange").value =  stock_v;
+                document.querySelector("#demo").textContent = stock_v.toString();
+                bank.textContent = '$' + bank_v.toFixed(2);
+                stock.textContent = stock_v.toString();
 
-        updatedApi();
-        }
-    }
-    else if (document.getElementById('holdButton').checked) { 
+                updatedApi();
+                }
+            }
+            else if (document.getElementById('holdButton').checked) { 
 
-        updatedApi();
-    }
-    else { 
+                updatedApi();
+            }
+            else { 
 
-        document.getElementById("notOpt").style.visibility = "visible";
-    }
-});
+                document.getElementById("notOpt").style.visibility = "visible";
+            }
+        });
     </script>
       
 
